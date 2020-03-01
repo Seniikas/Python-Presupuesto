@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 """
+Created on Thu Feb 27 14:30:26 2020
+
+@author: Javier
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Sat Feb 22 23:22:50 2020
 
 @author: Javier
 """
 from tkinter import *    # Carga módulo tk (widgets estándar)
 from tkinter import ttk  # Carga ttk (para widgets nuevos 8.5+)
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 class Aplicacion():
     def __init__(self):
@@ -125,7 +134,7 @@ class Aplicacion():
                             
                 
         self.boton1 = ttk.Button(self.raiz, text="Calcular", 
-                                 command=self.CalcularTotal)
+                                 command=self.pedirNombre)
         
         
         """UBICACION DE LOS WIDGETS"""
@@ -219,14 +228,52 @@ class Aplicacion():
         totalpilotes1 = PrecioTotalPilotes(pilotes1,med1.npilotes)
         viaticos1 = CostoViaticos(viat1.transporte,viat1.nviajes,viat1.costoviaje,viat1.comida,viat1.dias,viat1.hospedaje)
         total = totalpilotes1 + viaticos1
+        w,h = A4   
+        presInterno = canvas.Canvas(self.nombre.get() + ' Interno.pdf')
+        texto = presInterno.beginText(100, h -100)
+        texto.textLine("PRECIO POR PILOTE: $" + str(round(iibb(total/med1.npilotes),2)))
+        texto.textLine("TOTAL POR PILOTES: $" + str(round(iibb(totalpilotes1),2)) )
+        texto.textLine("VIATICOS: $" + str(round(iibb(viaticos1),2)) )
+        texto.textLine("TOTAL A ABONAR: $" + str(round(iibb(total),2)))
+        texto.textLine("ADELANTO SOLICITADO: $" + str(round(iibb(total)*.75,2)) )
+        texto.textLine("VIATICOS POR COMIDA: $" + str(round(viat1.comida*viat1.dias,2)))
+        texto.textLine('')
+        texto.textLine("HONORARIOS OPERADOR: $" + str(round(totalpilotes1*.25,2)))
+        presInterno.drawText(texto)
+        presInterno.showPage()
+        presInterno.save()
+        
+        
+        
+        presCliente = canvas.Canvas(self.nombre.get() + '.pdf')
+        texto2 = presInterno.beginText(100, h -100)
+        texto2.textLine("PRECIO POR PILOTE: $" + str(round(iibb(total/med1.npilotes),2)))
+        texto2.textLine("TOTAL POR PILOTES: $" + str(round(iibb(totalpilotes1),2)) )
+        texto2.textLine("TOTAL A ABONAR: $" + str(round(iibb(total),2)) )
+        texto2.textLine("VIATICOS: $" + str(round(iibb(viaticos1),2)) )
+        texto2.textLine('')
+        texto2.textLine("ADELANTO SOLICITADO: $" + str(round(iibb(total)*.75,2)) )
+        
+        
+    
+        presCliente.drawText(texto2)
+        presCliente.showPage()
+        presCliente.save()
+        self.Presupuesto.destroy
+    
+    def pedirNombre(self, *args):
         self.Presupuesto = Toplevel()
-        self.precioPilote = ttk.Label(self.Presupuesto, text="PRECIO POR PILOTE: $" + str(round(iibb(total/med1.npilotes),2))).pack(side=TOP, padx = 20, pady = 10)
-        self.totalPilotes = ttk.Label(self.Presupuesto, text="TOTAL POR PILOTES: $" + str(round(iibb(totalpilotes1),2))).pack(side=TOP, padx = 20, pady = 10)
-        self.viaticos = ttk.Label(self.Presupuesto, text="VIATICOS: $" + str(round(iibb(viaticos1),2))).pack(side=TOP, padx = 20, pady = 10)
-        self.totalAbonar = ttk.Label(self.Presupuesto, text="TOTAL A ABONAR: $" + str(round(iibb(total),2))).pack(side=TOP, padx = 20, pady = 10)
-        self.adelantoSolicitado = ttk.Label(self.Presupuesto, text="ADELANTO SOLICITADO: $" + str(round(iibb(total)*.75,2))).pack(side=TOP, padx = 20, pady = 10)
-        self.viaticosComida = ttk.Label(self.Presupuesto, text="VIATICOS POR COMIDA: $" + str(round(viat1.comida*viat1.dias,2))).pack(side=TOP, padx = 20, pady = 10)
-        self.honorarios = ttk.Label(self.Presupuesto, text="HONORARIOS OPERADOR: $" + str(round(totalpilotes1*.25,2))).pack(side=TOP, padx = 20, pady = 10)
+        self.nombre =  StringVar(value = 'presupuesto')
+        self.nombreLabel =  ttk.Label(self.Presupuesto, text="Nombre para el archivo:").pack(side=TOP, padx = 20, pady = 10)
+        self.nombrePdf = ttk.Entry(self.Presupuesto, textvariable=self.nombre, width=15).pack(side=TOP, padx = 20, pady = 10)
+        #self.buttCalcular = ttk.Button(self.Presupuesto, command =  self.Presupuesto.destroy)
+        self.buttCalcular = ttk.Button(self.Presupuesto, text='Calcular', command= self.combinar_funciones(self.CalcularTotal, self.Presupuesto.destroy)).pack(side=BOTTOM, padx = 20, pady = 10)
+   
+    def combinar_funciones(self,*funcs):
+        def func_combinadas(*args, **kwargs):
+            for f in funcs:
+                f(*args, **kwargs)
+        return func_combinadas
         
 
 
